@@ -88,6 +88,39 @@
             Meta de Likes: 0 / 10,000
         </div>
     </div>
+
+    <!-- El Botón -->
+    <button id="btn-makanaky" onclick="toggleMakanaky()"
+        style="padding: 15px; background-color: green; color: white; font-weight: bold; border-radius: 8px; cursor: pointer;">
+        🟢 PRENDER MAKANAKY
+    </button>
+
+    <!-- La Lógica JavaScript -->
+    <script>
+        function toggleMakanaky() {
+            // Enviamos una petición POST al servidor local de Python
+            fetch('http://localhost:5000/toggle', {
+                method: 'POST'
+            })
+                .then(response => response.json())
+                .then(data => {
+                    const btn = document.getElementById('btn-makanaky');
+                    // Cambiamos el color y texto del botón según la respuesta de Python
+                    if (data.bot_activo) {
+                        btn.innerText = "🔴 APAGAR MAKANAKY";
+                        btn.style.backgroundColor = "red";
+                    } else {
+                        btn.innerText = "🟢 PRENDER MAKANAKY";
+                        btn.style.backgroundColor = "green";
+                    }
+                })
+                .catch(error => {
+                    console.error("No se pudo conectar con el cerebro de Makanaky:", error);
+                    alert("Asegúrate de que el script de Python esté corriendo, causa.");
+                });
+        }
+    </script>
+
 </body>
 
 </html>
