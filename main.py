@@ -22,9 +22,9 @@ def alternar_bot():
     global bot_activo
     bot_activo = not bot_activo
     if bot_activo:
-        print("\n🟢 [BOTÓN F9] MAKANAKY ACTIVADO - ¡Que empiece el show! ¡Gaaaa!\n")
+        print("\n [BOTÓN F9] MAKANAKY ACTIVADO - ¡Que empiece el show! ¡Gaaaa!\n")
     else:
-        print("\n🔴 [BOTÓN F9] MAKANAKY SILENCIADO - Bot en pausa.\n")
+        print("\n [BOTÓN F9] MAKANAKY SILENCIADO - Bot en pausa.\n")
 
 # Configuramos la tecla F9 para prender/apagar al bot
 keyboard.add_hotkey('F9', alternar_bot)
@@ -64,8 +64,8 @@ async def procesador_de_voz():
 
 @client.on(ConnectEvent)
 async def on_connect(event: ConnectEvent):
-    print(f"✅ ¡Conectado al Live de {event.unique_id}!")
-    print("⚠️ EL BOT ESTÁ APAGADO. PRESIONA 'F9' PARA ACTIVARLO.")
+    print(f" ¡Conectado al Live de {event.unique_id}!")
+    print(" EL BOT ESTÁ APAGADO. PRESIONA 'F9' PARA ACTIVARLO.")
 
 @client.on(CommentEvent)
 async def on_comment(event: CommentEvent):
@@ -73,7 +73,7 @@ async def on_comment(event: CommentEvent):
     if not bot_activo:
         return
 
-    print(f"💬 [{event.user.nickname}]: {event.comment}")
+    print(f" [{event.user.nickname}]: {event.comment}")
     if "makanaky" in event.comment.lower() or "habla" in event.comment.lower():
         respuesta = await generar_respuesta_async(event.comment, event.user.nickname)
         await tts_queue.put(respuesta)
@@ -84,7 +84,7 @@ async def on_gift(event: GiftEvent):
     if not bot_activo:
         return
 
-    print(f"🎁 [{event.user.nickname}] envió {event.gift.name}")
+    print(f" [{event.user.nickname}] envió {event.gift.name}")
     if event.gift.name == "Rose":
         mensaje = f"¡Gaaaa! Gracias por la rosa, {event.user.nickname}, eres de la realeza."
     else:
