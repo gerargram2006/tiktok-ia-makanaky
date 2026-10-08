@@ -6,6 +6,7 @@ import keyboard
 from dotenv import load_dotenv
 from TikTokLive import TikTokLiveClient
 from TikTokLive.events import ConnectEvent, CommentEvent, GiftEvent
+from aiohttp import web
 
 load_dotenv()
 TIKTOK_USERNAME = os.getenv("TIKTOK_USERNAME")
@@ -91,8 +92,44 @@ async def on_gift(event: GiftEvent):
         mensaje = f"Habla causa {event.user.nickname}, gracias por el regalito. ¡Gaaaa!"
     await tts_queue.put(mensaje)
 
+# --- API LOCAL PARA COMUNICARSE CON EL HTML ---
+async def toggle_bot(request):
+    global bot_activo
+    bot_activo = not bot_activo
+    estado = "ACTIVADO" if bot_activo else "DESACTIVADO"
+    print(f"\n🖥️ [PANEL WEB] MAKANAKY {estado}!\n")
+    
+    # Configuramos CORS para que el HTML pueda hablar con Python sin bloqueos de seguridad
+    headers = {
+        "Access-Control-Allow-Origin": "*",
+        "Access-Control-Allow-Methods": "POST, OPTIONS",
+        "Access-Control-Allow-Headers": "Content-Type"
+    }
+    return web.json_response({"status": "ok", "bot_activo": bot_activo}, headers=headers)
+
+async def opciones_cors(request):
+    # Responde a las peticiones pre-flight del navegador
+    headers = {
+        "Access-Control-Allow-Origin": "*",
+        "Access-Control-Allow-Methods": "POST, OPTIONS",
+        "Access-Control-Allow-Headers": "Content-Type"
+    }
+    return web.Response(headers=headers)
+
+async def iniciar_servidor_web():
+    app = web.Application()
+    app.router.add_post('/toggle', toggle_bot)
+    app.router.add_options('/toggle', opciones_cors)
+    runner = web.AppRunner(app)
+    await runner.setup()
+    site = web.TCPSite(runner, 'localhost', 5000)
+    await site.start()
+    print("🌐 Panel de control web activo en el puerto 5000")
+
+# --- FUNCIÓN PRINCIPAL ACTUALIZADA ---
 async def main():
     asyncio.create_task(procesador_de_voz())
+    asyncio.create_task(iniciar_servidor_web()) # Arranca el servidor web en segundo plano
     await client.start()
 
 if __name__ == '__main__':
