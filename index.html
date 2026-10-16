@@ -4,123 +4,582 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Menu Makanaky</title>
+    <title>Panel de Control 3D - Gerson / Makanaky IA</title>
     <style>
-        body {
+        * {
+            box-sizing: border-box;
             margin: 0;
-            padding: 20px;
-            font-family: 'Arial', sans-serif;
-            /* Fondo transparente para que no tape tu Live */
-            background-color: transparent;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background: radial-gradient(circle at center, #1e293b 0%, #0f172a 100%);
+            color: #ffffff;
+            overflow: hidden;
+            height: 100vh;
+            display: flex;
+        }
+
+        /* Contenedor del Lienzo 3D */
+        #canvas-container {
+            flex: 1;
+            height: 100vh;
+            position: relative;
+        }
+
+        /* Panel de Control Lateral / Flotante */
+        .control-panel {
+            width: 360px;
+            background: rgba(15, 23, 42, 0.88);
+            backdrop-filter: blur(12px);
+            border-left: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 25px;
+            display: flex;
+            flex-direction: column;
+            gap: 18px;
+            z-index: 10;
+            box-shadow: -8px 0 25px rgba(0, 0, 0, 0.5);
+        }
+
+        .panel-header h1 {
+            font-size: 1.4rem;
+            color: #facc15;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .panel-header p {
+            font-size: 0.85rem;
+            color: #94a3b8;
+            margin-top: 4px;
+        }
+
+        /* Indicador de Estado */
+        .status-box {
+            background: rgba(30, 41, 59, 0.9);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            padding: 14px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .status-badge {
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: bold;
+            background: #ef4444;
             color: white;
         }
 
-        .menu-container {
-            background-color: rgba(15, 15, 15, 0.85);
-            border: 3px solid #ffcc00;
-            border-radius: 15px;
-            padding: 20px;
-            width: 320px;
-            box-shadow: 0 0 15px #ffcc00;
+        .status-badge.active {
+            background: #22c55e;
+            box-shadow: 0 0 12px rgba(34, 197, 94, 0.6);
         }
 
-        .titulo {
-            text-align: center;
-            color: #ffcc00;
-            font-size: 24px;
+        /* Botones */
+        .btn {
+            width: 100%;
+            padding: 15px;
+            border: none;
+            border-radius: 10px;
+            font-size: 1rem;
             font-weight: bold;
-            text-transform: uppercase;
-            margin-bottom: 20px;
-        }
-
-        .item {
+            cursor: pointer;
+            transition: all 0.2s ease;
             display: flex;
-            justify-content: space-between;
             align-items: center;
-            background-color: #222;
-            margin-bottom: 15px;
-            padding: 10px 15px;
+            justify-content: center;
+            gap: 8px;
+            color: white;
+        }
+
+        .btn:active {
+            transform: scale(0.97);
+        }
+
+        #btn-makanaky {
+            background: linear-gradient(135deg, #22c55e, #16a34a);
+            box-shadow: 0 4px 15px rgba(34, 197, 94, 0.35);
+        }
+
+        #btn-makanaky.apagar {
+            background: linear-gradient(135deg, #ef4444, #dc2626);
+            box-shadow: 0 4px 15px rgba(239, 68, 68, 0.35);
+        }
+
+        .btn-test {
+            background: linear-gradient(135deg, #3b82f6, #2563eb);
+        }
+
+        .btn-mic {
+            background: linear-gradient(135deg, #8b5cf6, #6d28d9);
+        }
+
+        .btn-mic.listening {
+            background: linear-gradient(135deg, #f59e0b, #d97706);
+            animation: pulse 1.5s infinite;
+        }
+
+        @keyframes pulse {
+
+            0%,
+            100% {
+                box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.6);
+            }
+
+            50% {
+                box-shadow: 0 0 0 10px rgba(245, 158, 11, 0);
+            }
+        }
+
+        /* Globo de diálogo en vivo */
+        #speech-bubble {
+            position: absolute;
+            top: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: white;
+            color: #0f172a;
+            padding: 14px 24px;
+            border-radius: 25px;
+            font-weight: 800;
+            font-size: 1.2rem;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.4);
+            border: 3px solid #facc15;
+            opacity: 0;
+            transition: opacity 0.3s ease, transform 0.3s ease;
+            pointer-events: none;
+            z-index: 5;
+        }
+
+        #speech-bubble.visible {
+            opacity: 1;
+            transform: translateX(-50%) translateY(5px);
+        }
+
+        .hint {
+            font-size: 0.78rem;
+            color: #cbd5e1;
+            background: rgba(255, 255, 255, 0.05);
+            padding: 12px;
             border-radius: 8px;
-            border-left: 5px solid #e91e63;
-        }
-
-        .regalo {
-            font-weight: bold;
-            color: #e91e63;
-            font-size: 18px;
-        }
-
-        .accion {
-            font-size: 16px;
-        }
-
-        .meta {
-            text-align: center;
-            background-color: #4CAF50;
-            padding: 10px;
-            border-radius: 8px;
-            margin-top: 20px;
-            font-weight: bold;
+            line-height: 1.4;
+            margin-top: auto;
         }
     </style>
+    <!-- Librería Three.js para gráficos 3D en el navegador -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
 </head>
 
 <body>
-    <div class="menu-container">
-        <div class="titulo">Brosteria La Realeza</div>
 
-        <div class="item">
-            <span class="regalo">1 Rosa</span>
-            <span class="accion">Saludo de barrio</span>
+    <!-- Escenario 3D -->
+    <div id="canvas-container">
+        <div id="speech-bubble">¡Gaaaa! Ya llegó la realeza, batería 🍔🔥</div>
+    </div>
+
+    <!-- Panel de Control -->
+    <div class="control-panel">
+        <div class="panel-header">
+            <h1>🍔 Gerson 3D Studio</h1>
+            <p>Control de IA para TikTok Live + Ollama</p>
         </div>
 
-        <div class="item">
-            <span class="regalo">1 Dona</span>
-            <span class="accion">Grito Gaaaa!</span>
+        <div class="status-box">
+            <span>Estado del Bot:</span>
+            <span id="status-badge" class="status-badge">APAGADO</span>
         </div>
 
-        <div class="item">
-            <span class="regalo">1 Helado</span>
-            <span class="accion">Insulto elegante</span>
-        </div>
+        <!-- Botón Principal conectado a Python -->
+        <button id="btn-makanaky" class="btn" onclick="toggleMakanaky()">
+            🟢 PRENDER MAKANAKY
+        </button>
 
-        <div class="meta">
-            Meta de Likes: 0 / 10,000
+        <!-- Botón para probar la animación de habla -->
+        <button class="btn btn-test" onclick="probarHabla()">
+            🗣️ PROBAR "¡GAAAA!" (TEST 3D)
+        </button>
+
+        <!-- Botón para mover la boca con el audio de la PC/Micrófono -->
+        <button id="btn-mic" class="btn btn-mic" onclick="toggleAudioSync()">
+            🎙️ VINCULAR VOZ CON BOCA 3D
+        </button>
+
+        <div class="hint">
+            💡 <strong>Tip de Streamer:</strong> Puedes rotar la cámara con el clic izquierdo y hacer zoom con la
+            ruedita del mouse. En OBS, agrega este HTML como <em>"Fuente de Navegador"</em> para mostrar a Gerson en 3D
+            en tu directo.
         </div>
     </div>
 
-    <!-- El Botón -->
-    <button id="btn-makanaky" onclick="toggleMakanaky()"
-        style="padding: 15px; background-color: green; color: white; font-weight: bold; border-radius: 8px; cursor: pointer;">
-        🟢 PRENDER MAKANAKY
-    </button>
-
-    <!-- La Lógica JavaScript -->
     <script>
+        // ==========================================
+        // 1. LÓGICA DE CONEXIÓN CON PYTHON (BACKEND)
+        // ==========================================
+        let botActivo = false;
+        let isTalking = false;
+        let audioContext, analyser, dataArray;
+        let micListening = false;
+
         function toggleMakanaky() {
-            // Enviamos una petición POST al servidor local de Python
-            fetch('http://localhost:5000/toggle', {
-                method: 'POST'
-            })
+            fetch('http://localhost:5000/toggle', { method: 'POST' })
                 .then(response => response.json())
                 .then(data => {
-                    const btn = document.getElementById('btn-makanaky');
-                    // Cambiamos el color y texto del botón según la respuesta de Python
-                    if (data.bot_activo) {
-                        btn.innerText = "🔴 APAGAR MAKANAKY";
-                        btn.style.backgroundColor = "red";
-                    } else {
-                        btn.innerText = "🟢 PRENDER MAKANAKY";
-                        btn.style.backgroundColor = "green";
-                    }
+                    actualizarEstadoUI(data.bot_activo);
                 })
-                .catch(error => {
-                    console.error("No se pudo conectar con el cerebro de Makanaky:", error);
-                    alert("Asegúrate de que el script de Python esté corriendo, causa.");
+                .catch(() => {
+                    // Modo simulación local si el script de Python aún no está corriendo
+                    botActivo = !botActivo;
+                    actualizarEstadoUI(botActivo);
+                    console.warn("Modo prueba visual: Python no detectado en puerto 5000.");
                 });
         }
-    </script>
 
+        function actualizarEstadoUI(activo) {
+            botActivo = activo;
+            const btn = document.getElementById('btn-makanaky');
+            const badge = document.getElementById('status-badge');
+
+            if (botActivo) {
+                btn.innerText = "🔴 APAGAR MAKANAKY";
+                btn.classList.add('apagar');
+                badge.innerText = "ACTIVO";
+                badge.classList.add('active');
+                mostrarDialogo("¡Gaaaa! Bot activado, batería seria 🔥");
+                hablarSimulado(2800);
+            } else {
+                btn.innerText = "🟢 PRENDER MAKANAKY";
+                btn.classList.remove('apagar');
+                badge.innerText = "APAGADO";
+                badge.classList.remove('active');
+                mostrarDialogo("Bot en pausa, mi king 🤫");
+                hablarSimulado(1200);
+            }
+        }
+
+        function probarHabla() {
+            const frases = [
+                "¡Gaaaa! Pide tu hamburguesa causa, ¡sale con todas las cremas!",
+                "¡Habla batería! Gracias por esa rosita, eres de la realeza.",
+                "¡Batería seria! Aquí cocinando las mejores burgers en vivo, ¡Gaaaa!"
+            ];
+            const frase = frases[Math.floor(Math.random() * frases.length)];
+            mostrarDialogo(frase);
+            hablarSimulado(3500);
+
+            if ('speechSynthesis' in window) {
+                window.speechSynthesis.cancel();
+                const utterance = new SpeechSynthesisUtterance(frase);
+                utterance.lang = 'es-PE';
+                utterance.rate = 1.15;
+                window.speechSynthesis.speak(utterance);
+            }
+        }
+
+        function mostrarDialogo(texto) {
+            const bubble = document.getElementById('speech-bubble');
+            bubble.innerText = texto;
+            bubble.classList.add('visible');
+            setTimeout(() => bubble.classList.remove('visible'), 3500);
+        }
+
+        function hablarSimulado(duracionMs) {
+            isTalking = true;
+            setTimeout(() => { isTalking = false; }, duracionMs);
+        }
+
+        // Sincronización de boca por detección de audio
+        async function toggleAudioSync() {
+            const btnMic = document.getElementById('btn-mic');
+            if (micListening) {
+                micListening = false;
+                btnMic.innerText = "🎙️ VINCULAR VOZ CON BOCA 3D";
+                btnMic.classList.remove('listening');
+                return;
+            }
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                const source = audioContext.createMediaStreamSource(stream);
+                analyser = audioContext.createAnalyser();
+                analyser.fftSize = 256;
+                source.connect(analyser);
+                dataArray = new Uint8Array(analyser.frequencyBinCount);
+                micListening = true;
+                btnMic.innerText = "🔊 ESCUCHANDO VOZ EN VIVO...";
+                btnMic.classList.add('listening');
+            } catch (err) {
+                alert("Permite el acceso al micrófono/audio para mover la boca de Gerson en tiempo real.");
+            }
+        }
+
+        // ==========================================
+        // 2. ESCENA 3D DE GERSON CON THREE.JS
+        // ==========================================
+        const container = document.getElementById('canvas-container');
+        const scene = new THREE.Scene();
+
+        const camera = new THREE.PerspectiveCamera(45, container.clientWidth / container.clientHeight, 0.1, 1000);
+        camera.position.set(0, 2.2, 6.2);
+
+        const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+        renderer.setSize(container.clientWidth, container.clientHeight);
+        renderer.setPixelRatio(window.devicePixelRatio);
+        renderer.shadowMap.enabled = true;
+        container.appendChild(renderer.domElement);
+
+        const controls = new THREE.OrbitControls(camera, renderer.domElement);
+        controls.target.set(0, 1.2, 0);
+        controls.enableDamping = true;
+        controls.maxPolarAngle = Math.PI / 2 + 0.1;
+
+        // Luces estilo estudio Pixar
+        const ambientLight = new THREE.AmbientLight(0xffffff, 0.65);
+        scene.add(ambientLight);
+
+        const dirLight = new THREE.DirectionalLight(0xfffbeb, 0.95);
+        dirLight.position.set(5, 8, 6);
+        dirLight.castShadow = true;
+        scene.add(dirLight);
+
+        const grillGlow = new THREE.PointLight(0xff6b00, 0.8, 4);
+        grillGlow.position.set(0, 0.4, 1.2);
+        scene.add(grillGlow);
+
+        // Materiales
+        const skinMat = new THREE.MeshStandardMaterial({ color: 0xd98254, roughness: 0.5 });
+        const hairMat = new THREE.MeshStandardMaterial({ color: 0x7dd3fc, roughness: 0.6 });
+        const shirtMat = new THREE.MeshStandardMaterial({ color: 0xfacc15, roughness: 0.7 });
+        const apronMat = new THREE.MeshStandardMaterial({ color: 0x1e293b, roughness: 0.8 });
+        const metalMat = new THREE.MeshStandardMaterial({ color: 0xcbd5e1, metalness: 0.7, roughness: 0.3 });
+        const darkMetalMat = new THREE.MeshStandardMaterial({ color: 0x111827, metalness: 0.4, roughness: 0.6 });
+
+        // Grupo del Personaje Gerson
+        const gerson = new THREE.Group();
+        scene.add(gerson);
+
+        // Torso (Polo amarillo + Mandil negro)
+        const torso = new THREE.Mesh(new THREE.CylinderGeometry(0.68, 0.78, 1.8, 24), shirtMat);
+        torso.position.y = 0.9;
+        gerson.add(torso);
+
+        const apron = new THREE.Mesh(new THREE.BoxGeometry(1.15, 1.5, 0.85), apronMat);
+        apron.position.set(0, 0.85, 0.32);
+        gerson.add(apron);
+
+        // Cuello y Cabeza
+        const neck = new THREE.Mesh(new THREE.CylinderGeometry(0.26, 0.3, 0.4, 16), skinMat);
+        neck.position.y = 1.9;
+        gerson.add(neck);
+
+        const headGroup = new THREE.Group();
+        headGroup.position.set(0, 2.45, 0.1);
+        gerson.add(headGroup);
+
+        const head = new THREE.Mesh(new THREE.SphereGeometry(0.62, 32, 32), skinMat);
+        head.scale.set(0.92, 1.08, 0.95);
+        headGroup.add(head);
+
+        // Cabello celeste rizado (Esferas agrupadas)
+        const hairGroup = new THREE.Group();
+        const curlPositions = [
+            [0, 0.58, 0.1], [-0.25, 0.55, 0.15], [0.25, 0.55, 0.15],
+            [-0.42, 0.42, 0.05], [0.42, 0.42, 0.05], [0, 0.52, 0.35],
+            [-0.22, 0.48, 0.38], [0.22, 0.48, 0.38], [0, 0.62, -0.15],
+            [-0.3, 0.52, -0.18], [0.3, 0.52, -0.18], [-0.45, 0.38, 0.25], [0.45, 0.38, 0.25]
+        ];
+        curlPositions.forEach(pos => {
+            const curl = new THREE.Mesh(new THREE.SphereGeometry(0.22, 16, 16), hairMat);
+            curl.position.set(...pos);
+            hairGroup.add(curl);
+        });
+        headGroup.add(hairGroup);
+
+        // Ojos y Cejas
+        const eyeWhiteMat = new THREE.MeshBasicMaterial({ color: 0xffffff });
+        const pupilMat = new THREE.MeshBasicMaterial({ color: 0x3b1e08 });
+        const browMat = new THREE.MeshStandardMaterial({ color: 0x27170c });
+
+        const leftEye = new THREE.Group();
+        const eyeSphereL = new THREE.Mesh(new THREE.SphereGeometry(0.11, 16, 16), eyeWhiteMat);
+        const pupilL = new THREE.Mesh(new THREE.SphereGeometry(0.06, 16, 16), pupilMat);
+        pupilL.position.z = 0.08;
+        leftEye.add(eyeSphereL, pupilL);
+        leftEye.position.set(-0.21, 0.1, 0.52);
+
+        const rightEye = leftEye.clone();
+        rightEye.position.set(0.21, 0.1, 0.52);
+        headGroup.add(leftEye, rightEye);
+
+        const browGeo = new THREE.BoxGeometry(0.22, 0.05, 0.06);
+        const leftBrow = new THREE.Mesh(browGeo, browMat);
+        leftBrow.position.set(-0.21, 0.28, 0.55);
+        const rightBrow = new THREE.Mesh(browGeo, browMat);
+        rightBrow.position.set(0.21, 0.28, 0.55);
+        headGroup.add(leftBrow, rightBrow);
+
+        // Nariz
+        const nose = new THREE.Mesh(new THREE.ConeGeometry(0.09, 0.25, 16), skinMat);
+        nose.position.set(0, -0.02, 0.62);
+        nose.rotation.x = 0.2;
+        headGroup.add(nose);
+
+        // Boca Animada (Mandíbula)
+        const mouthMat = new THREE.MeshBasicMaterial({ color: 0x450a0a });
+        const tongueMat = new THREE.MeshBasicMaterial({ color: 0xf43f5e });
+
+        const mouthGroup = new THREE.Group();
+        mouthGroup.position.set(0, -0.26, 0.53);
+        const mouthCavity = new THREE.Mesh(new THREE.SphereGeometry(0.16, 16, 16), mouthMat);
+        mouthCavity.scale.set(1.2, 0.3, 0.5);
+        const tongue = new THREE.Mesh(new THREE.SphereGeometry(0.09, 12, 12), tongueMat);
+        tongue.position.set(0, -0.04, 0.03);
+        mouthGroup.add(mouthCavity, tongue);
+        headGroup.add(mouthGroup);
+
+        // Brazos y Pinzas cocinando
+        const leftArm = new THREE.Group();
+        leftArm.position.set(-0.8, 1.5, 0.2);
+        const armMeshL = new THREE.Mesh(new THREE.CylinderGeometry(0.16, 0.14, 1.1, 16), skinMat);
+        armMeshL.rotation.x = Math.PI / 3;
+        armMeshL.position.set(0, -0.3, 0.4);
+        const tongL = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.05, 0.7), metalMat);
+        tongL.position.set(0, -0.6, 0.9);
+        leftArm.add(armMeshL, tongL);
+        gerson.add(leftArm);
+
+        const rightArm = leftArm.clone();
+        rightArm.position.set(0.8, 1.5, 0.2);
+        gerson.add(rightArm);
+
+        // ==========================================
+        // 3. PLANCHA DE HAMBURGUESAS, PAPAS Y CREMAS
+        // ==========================================
+        const counter = new THREE.Mesh(new THREE.BoxGeometry(4.5, 0.8, 2.2), metalMat);
+        counter.position.set(0, -0.1, 1.4);
+        scene.add(counter);
+
+        const grillPlate = new THREE.Mesh(new THREE.BoxGeometry(2.4, 0.1, 1.4), darkMetalMat);
+        grillPlate.position.set(0, 0.32, 1.3);
+        scene.add(grillPlate);
+
+        // Hamburguesas en la plancha
+        const pattyMat = new THREE.MeshStandardMaterial({ color: 0x5c2c16, roughness: 0.9 });
+        for (let i = -0.6; i <= 0.6; i += 0.6) {
+            const patty = new THREE.Mesh(new THREE.CylinderGeometry(0.24, 0.24, 0.09, 20), pattyMat);
+            patty.position.set(i, 0.4, 1.3);
+            scene.add(patty);
+        }
+
+        // Botellas de cremas (Ketchup, Mostaza, Mayonesa)
+        const sauces = [
+            { color: 0xef4444, x: -1.6, z: 1.5 },
+            { color: 0xfacc15, x: -1.3, z: 1.7 },
+            { color: 0xfef08a, x: 1.5, z: 1.5 }
+        ];
+        sauces.forEach(s => {
+            const bottle = new THREE.Mesh(
+                new THREE.CylinderGeometry(0.12, 0.12, 0.45, 16),
+                new THREE.MeshStandardMaterial({ color: s.color })
+            );
+            bottle.position.set(s.x, 0.52, s.z);
+            scene.add(bottle);
+        });
+
+        // Partículas de humo saliendo de la parrilla
+        const smokeParticles = [];
+        const smokeMat = new THREE.MeshBasicMaterial({ color: 0xe2e8f0, transparent: true, opacity: 0.35 });
+        for (let i = 0; i < 12; i++) {
+            const p = new THREE.Mesh(new THREE.SphereGeometry(0.12, 8, 8), smokeMat.clone());
+            p.position.set((Math.random() - 0.5) * 1.5, 0.5 + Math.random() * 1.5, 1.3 + (Math.random() - 0.5) * 0.5);
+            scene.add(p);
+            smokeParticles.push(p);
+        }
+
+        // ==========================================
+        // 4. BUCLE DE ANIMACIÓN EN TIEMPO REAL
+        // ==========================================
+        let clock = new THREE.Clock();
+
+        function animate() {
+            requestAnimationFrame(animate);
+            const t = clock.getElapsedTime();
+
+            // Evaluar volumen si el micrófono está activo
+            let audioLevel = 0;
+            if (micListening && analyser) {
+                analyser.getByteFrequencyData(dataArray);
+                let sum = 0;
+                for (let i = 0; i < dataArray.length; i++) sum += dataArray[i];
+                audioLevel = sum / dataArray.length;
+            }
+
+            const hablandoAhora = isTalking || audioLevel > 22;
+
+            // Animación de Boca y Cejas al hablar
+            if (hablandoAhora) {
+                const openAmount = micListening
+                    ? Math.min(1.6, Math.max(0.3, audioLevel / 35))
+                    : 0.4 + Math.abs(Math.sin(t * 18)) * 1.1;
+                mouthCavity.scale.y = openAmount;
+                leftBrow.position.y = 0.3 + Math.sin(t * 15) * 0.03;
+                rightBrow.position.y = 0.3 + Math.sin(t * 15) * 0.03;
+                headGroup.rotation.z = Math.sin(t * 8) * 0.06;
+                headGroup.position.y = 2.45 + Math.abs(Math.sin(t * 10)) * 0.05;
+            } else {
+                mouthCavity.scale.y = 0.15;
+                leftBrow.position.y = 0.28;
+                rightBrow.position.y = 0.28;
+                headGroup.rotation.z = Math.sin(t * 1.5) * 0.02;
+                headGroup.position.y = 2.45 + Math.sin(t * 2) * 0.02;
+            }
+
+            // Parpadeo automático cada ~4 segundos
+            const blinkCycle = t % 4;
+            if (blinkCycle > 3.85) {
+                leftEye.scale.y = 0.1;
+                rightEye.scale.y = 0.1;
+            } else {
+                leftEye.scale.y = 1;
+                rightEye.scale.y = 1;
+            }
+
+            // Movimiento de brazos cocinando en la plancha
+            leftArm.rotation.x = Math.sin(t * 4) * 0.15;
+            leftArm.rotation.y = Math.cos(t * 3) * 0.15;
+            rightArm.rotation.x = -Math.sin(t * 4) * 0.15;
+            rightArm.rotation.y = -Math.cos(t * 3) * 0.15;
+
+            // Subida de humo de las hamburguesas
+            smokeParticles.forEach((p, idx) => {
+                p.position.y += 0.012;
+                p.scale.multiplyScalar(1.003);
+                p.material.opacity -= 0.0025;
+                if (p.material.opacity <= 0) {
+                    p.position.set((Math.random() - 0.5) * 1.4, 0.45, 1.3 + (Math.random() - 0.5) * 0.4);
+                    p.scale.set(1, 1, 1);
+                    p.material.opacity = 0.4;
+                }
+            });
+
+            controls.update();
+            renderer.render(scene, camera);
+        }
+
+        animate();
+
+        // Ajuste automático de ventana
+        window.addEventListener('resize', () => {
+            camera.aspect = container.clientWidth / container.clientHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(container.clientWidth, container.clientHeight);
+        });
+    </script>
 </body>
 
 </html>
