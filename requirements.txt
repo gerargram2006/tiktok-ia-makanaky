@@ -1,4 +1,6 @@
-TikTokLive==6.0.1
-pyttsx3==2.91
-requests==2.31.0
-python-dotenv==1.0.1
+TikTokLive>=7.0.1
+pyttsx3>=2.91
+requests>=2.31.0
+python-dotenv>=1.0.1
+aiohttp>=3.10.0
+keyboard>=0.13.5
