@@ -1,97 +1,102 @@
 # TikTok Live AI Bot - Edicion Makanaky
 
-Este repositorio contiene un bot interactivo desarrollado en Python, diseñado para conectarse a transmisiones de TikTok Live. Procesa eventos en tiempo real como comentarios y regalos, y genera respuestas de audio dinamicas y contextuales utilizando un Modelo de Lenguaje Grande (LLM) ejecutado en local y una herramienta de Texto a Voz (TTS).
+Este repositorio contiene un bot interactivo desarrollado en Python para transmisiones de TikTok Live. Procesa eventos en tiempo real (comentarios y regalos) y genera respuestas de voz utilizando un modelo de lenguaje local en Ollama y un motor de Texto a Voz (TTS).
 
-El bot esta configurado con una personalidad especifica (Makanaky), demostrando capacidades de ingenieria de prompts e interaccion en vivo.
+El bot cuenta con un panel web interactivo en 3D desarrollado con Three.js que permite visualizar al personaje, sincronizar el movimiento de la boca con el microfono o audio y controlar el encendido/apagado del bot.
 
-## Arquitectura y Caracteristicas
+## Caracteristicas Principales
 
-* Escucha de Eventos en Tiempo Real: Utiliza la libreria TikTokLive para capturar comentarios, donaciones y nuevos espectadores de forma asincrona.
-
-* Integracion de LLM Local: Usa Ollama (modelo Llama 3.1) para generar respuestas localmente. Esto garantiza cero costos por consumo de API y total privacidad de los datos.
-
-* Cola de Audio Asincrona: Implementa asyncio.Queue para gestionar el alto volumen de interacciones. Esto previene que los audios se superpongan o que el sistema colapse cuando entran muchos mensajes al mismo tiempo.
-
-* Texto a Voz (TTS): Emplea la libreria pyttsx3 para sintetizar y reproducir de forma inmediata el texto generado por la inteligencia artificial.
-
-* Interfaz de Control Web (Frontend y Backend): Incluye un panel interactivo (HTML) que se conecta a un servidor local asincrono construido con `aiohttp`. Permite encender o apagar la IA con un simple clic a traves del puerto 5000.
-
-* Control por Teclado Local: Soporta la activacion y desactivacion rapida de la IA desde el equipo donde se ejecuta mediante un atajo global de teclado (tecla F9).
-
-* Seguridad del Entorno: Usa python-dotenv para aislar el usuario objetivo y mantener el entorno seguro frente a filtraciones en repositorios publicos.
+* Escucha de Eventos en Tiempo Real: Captura comentarios y regalos de TikTok Live de forma asincrona mediante TikTokLive v7.
+* Reintento Automatico de Conexion: Si el usuario configurado esta desconectado (offline), el sistema no se cierra; mantiene el servidor web activo y reintenta conectarse cada 15 segundos hasta que inicie el directo.
+* Modelo de Lenguaje Local: Genera respuestas personalizadas con Ollama utilizando el modelo Llama 3.1 sin costos de API y con privacidad local.
+* Sintesis de Voz Asincrona: Utiliza pyttsx3 gestionado mediante una cola asyncio.Queue para evitar colisiones y superposicion de audio.
+* Panel de Control 3D Web: Interfaz construida con Three.js que incluye un avatar animado, plancha de cocina con efectos, sincronizacion de movimiento de boca por nivel de audio y botones de control vinculados al backend.
+* Servidor API Local: Construido con aiohttp en el puerto 5000 con soporte CORS para la comunicacion fluida entre el archivo HTML y Python.
+* Atajo Global de Teclado: Permite activar o pausar el bot en cualquier momento pulsando la tecla F9.
+* Compatibilidad con Windows: Salida de consola configurada con vaciado inmediato y codificacion UTF-8 para evitar errores de caracteres.
 
 ## Requisitos Previos
 
-* Python 3.8 o superior
+* Python 3.8 o superior (compatible con Python 3.10, 3.11, 3.12, 3.13 y 3.14)
 * Git
-* Ollama instalado en tu sistema
+* Ollama instalado en el sistema
 
 ## Instalacion y Configuracion
 
-1. Clona el repositorio:
+1. Clonar el repositorio:
 
 ```bash
 git clone https://github.com/gerargram2006/tiktok-ia-makanaky.git
 cd tiktok-ia-makanaky
 ```
 
-2. Crea y activa un entorno virtual:
+2. Crear y activar el entorno virtual:
 
-```bash
+En Windows (PowerShell):
+```powershell
 python -m venv venv
+.\venv\Scripts\Activate.ps1
+```
 
-# En Windows:
-venv\Scripts\activate
+En Windows (CMD):
+```cmd
+python -m venv venv
+venv\Scripts\activate.bat
+```
 
-# En macOS/Linux:
+En Linux o macOS:
+```bash
+python3 -m venv venv
 source venv/bin/activate
 ```
 
-3. Instala las dependencias requeridas:
+3. Instalar las dependencias del proyecto:
 
 ```bash
 pip install -r requirements.txt
-pip install aiohttp keyboard
 ```
 
-4. Configura las variables de entorno:
-   Crea un archivo llamado `.env` en la raiz del proyecto y añade el usuario de TikTok que deseas monitorear:
+4. Configurar las variables de entorno:
+Crear un archivo llamado `.env` en la raiz del proyecto con el nombre de usuario de TikTok que se desea monitorear (no es obligatorio incluir el simbolo @):
 
 ```env
-TIKTOK_USERNAME=@usuario_objetivo
+TIKTOK_USERNAME=tu_usuario_de_tiktok
 ```
 
-## Uso
+## Guia de Uso
 
-1. Inicia el motor de Ollama en una terminal separada con el modelo Llama 3.1:
+1. Iniciar Ollama con el modelo Llama 3.1:
+En una terminal independiente, iniciar el modelo ejecutando:
 
 ```bash
 ollama run llama3.1
 ```
 
-2. Ejecuta el bot en tu terminal principal (se recomienda abrirla como Administrador en Windows para que el atajo de teclado funcione correctamente):
+2. Ejecutar el script principal:
+En tu terminal con el entorno virtual activado (o como Administrador en Windows para permitir que la tecla F9 funcione globalmente):
 
+```bash
+py main.py
+```
+O bien:
 ```bash
 python main.py
 ```
 
-3. Abre el archivo `index.html` en tu navegador para visualizar y controlar la IA desde su interfaz web. 
+Al iniciar, la consola mostrara:
+* El estado del servidor web en http://localhost:5000
+* El intento de conexion al Live de TikTok. Si el usuario esta offline, la consola indicara el estado y continuara reintentando cada 15 segundos sin cerrar el programa.
 
-La consola registrara las conexiones exitosas, los comentarios detectados y la respuesta generada por el LLM. El audio se emitira por la salida predeterminada de tu computadora. Puedes activar o desactivar al bot en cualquier momento usando el boton del panel web o presionando la tecla F9.
+3. Abrir el panel de control 3D:
+Hacer doble clic en el archivo `index.html` para abrirlo en cualquier navegador web.
 
-##  Cómo usar el Panel Web (Para Principiantes)
+Desde el panel se puede:
+* Pulsar "PRENDER MAKANAKY" para activar o pausar las respuestas de la IA.
+* Pulsar "PROBAR ¡GAAAA!" para reproducir la animacion de habla de prueba en 3D.
+* Pulsar "VINCULAR VOZ CON BOCA 3D" para permitir que el microfono module la boca del avatar en tiempo real.
+* Usar el mouse para rotar la camara (clic izquierdo) y hacer zoom (rueda del mouse).
+* Integrar la interfaz en OBS Studio como "Fuente de Navegador" para mostrar al personaje animado en directos.
 
-¡No te preocupes si no sabes programar! Para ver la interfaz visual y controlar a la IA de manera fácil, solo sigue estos pasos:
+## Control por Teclado
 
-1. **Enciende el motor principal:** El servidor que conecta el panel con el bot se activa automáticamente al ejecutar tu bot con este comando:
-```bash
-python main.py
-```
-
-2. **Abre el panel visual:** Puedes hacer **doble clic** en el archivo `index.html` para que se abra automáticamente en tu navegador favorito (Chrome, Edge, Firefox).
-
-*(Alternativa)* Si el doble clic no te funciona o prefieres abrirlo como una página real, abre una nueva consola y ejecuta este comando para iniciar un servidor web básico:
-```bash
-python -m http.server 8000
-```
-Luego, entra desde tu navegador a: http://localhost:8000
+* Tecla F9: Alterna entre el estado ACTIVADO y SILENCIADO del bot en cualquier momento mientras el script este ejecutandose.
