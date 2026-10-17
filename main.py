@@ -6,6 +6,7 @@ from dotenv import load_dotenv
 from aiohttp import web
 from TikTokLive import TikTokLiveClient
 from TikTokLive.events import ConnectEvent, CommentEvent, GiftEvent
+from TikTokLive.client.errors import UserOfflineError
 
 load_dotenv()
 TIKTOK_USERNAME = os.getenv("TIKTOK_USERNAME")
@@ -160,7 +161,14 @@ async def iniciar_servidor_web():
 async def main():
     asyncio.create_task(procesador_de_voz())
     asyncio.create_task(iniciar_servidor_web())
-    await client.start()
+    
+    try:
+        await client.start()
+    except UserOfflineError:
+        print("\n❌ ERROR: ¡La cuenta de TikTok está OFFLINE!")
+        print("👉 Prende tu directo en TikTok primero, causa, y luego vuelve a correr el script.\n")
+    except Exception as e:
+        print(f"\n❌ Se cruzaron los cables: {e}\n")
 
 if __name__ == '__main__':
     asyncio.run(main())
