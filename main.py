@@ -26,8 +26,10 @@ engine = pyttsx3.init()
 engine.setProperty('rate', 160)
 tts_queue = asyncio.Queue()
 
-# --- VARIABLE GLOBAL PARA EL INTERRUPTOR ---
+# --- VARIABLES GLOBALES PARA ESTADO Y SINCRONIZACION ---
 bot_activo = False  # Empieza apagado para activarlo cuando estes listo
+esta_hablando = False
+ultimo_texto = ""
 
 def alternar_bot():
     global bot_activo
@@ -62,9 +64,13 @@ async def generar_respuesta_async(mensaje, usuario):
     return await asyncio.to_thread(peticion_ollama, mensaje, usuario)
 
 def reproducir_audio(texto):
+    global esta_hablando, ultimo_texto
+    esta_hablando = True
+    ultimo_texto = texto
     print(f"Makanaky: {texto}")
     engine.say(texto)
     engine.runAndWait()
+    esta_hablando = False
 
 async def procesador_de_voz():
     while True:
@@ -118,10 +124,22 @@ async def toggle_bot(request):
     }
     return web.json_response({"status": "ok", "bot_activo": bot_activo}, headers=headers)
 
+async def status_bot(request):
+    headers = {
+        "Access-Control-Allow-Origin": "*",
+        "Access-Control-Allow-Methods": "GET, OPTIONS",
+        "Access-Control-Allow-Headers": "Content-Type"
+    }
+    return web.json_response({
+        "bot_activo": bot_activo,
+        "hablando": esta_hablando,
+        "ultimo_texto": ultimo_texto
+    }, headers=headers)
+
 async def opciones_cors(request):
     headers = {
         "Access-Control-Allow-Origin": "*",
-        "Access-Control-Allow-Methods": "POST, OPTIONS",
+        "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
         "Access-Control-Allow-Headers": "Content-Type"
     }
     return web.Response(headers=headers)
@@ -130,6 +148,8 @@ async def iniciar_servidor_web():
     app = web.Application()
     app.router.add_post('/toggle', toggle_bot)
     app.router.add_options('/toggle', opciones_cors)
+    app.router.add_get('/status', status_bot)
+    app.router.add_options('/status', opciones_cors)
     runner = web.AppRunner(app)
     await runner.setup()
     try:
